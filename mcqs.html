@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCQs - Legal Profession in India</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .mcq-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .mcq-header h2 {
+            color: white;
+            border: none;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .mcq-filters {
+            background: white;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-left: 2rem;
+            margin-right: 2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            padding: 0.7rem 1rem;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+
+        .filter-group button {
+            padding: 0.7rem 1.5rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .filter-group button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .mcq-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 0 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .mcq-item {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .mcq-item:hover {
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .mcq-header-bar {
+            background: #3498db;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mcq-number {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .mcq-category {
+            background: rgba(255,255,255,0.2);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .mcq-body {
+            padding: 2rem;
+        }
+
+        .mcq-question {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .mcq-options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mcq-opt {
+            padding: 1rem;
+            border: 2px solid #ecf0f1;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: #f8f9fa;
+        }
+
+        .mcq-opt:hover {
+            border-color: #3498db;
+            background: #e8f4f8;
+        }
+
+        .mcq-opt.selected {
+            border-color: #3498db;
+            background: #d4e9f7;
+        }
+
+        .mcq-opt.correct {
+            border-color: #27ae60;
+            background: #d5f4e6;
+            color: #27ae60;
+            font-weight: 600;
+        }
+
+        .mcq-opt.incorrect {
+            border-color: #e74c3c;
+            background: #fadbd8;
+            color: #c0392b;
+            font-weight: 600;
+        }
+
+        .mcq-footer {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .show-answer-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .show-answer-btn:hover {
+            background: #2980b9;
+        }
+
+        .answer-box {
+            display: none;
+            background: #d5f4e6;
+            border-left: 4px solid #27ae60;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-radius: 6px;
+        }
+
+        .answer-box.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .answer-box strong {
+            color: #27ae60;
+            font-size: 1.1rem;
+        }
+
+        .answer-box p {
+            margin-top: 0.8rem;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .mcq-grid.empty {
+            text-align: center;
+            padding: 3rem 2rem;
+            font-size: 1.2rem;
+            color: #7f8c8d;
+        }
+
+        @media (max-width: 768px) {
+            .mcq-header {
+                padding: 2rem 1rem;
+            }
+
+            .mcq-header h2 {
+                font-size: 1.8rem;
+            }
+
+            .filter-group {
+                flex-direction: column;
+            }
+
+            .filter-group input,
+            .filter-group select,
+            .filter-group button {
+                width: 100%;
+            }
+
+            .mcq-filters {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+
+            .mcq-grid {
+                padding: 0 1rem;
+                gap: 1rem;
+            }
+
+            .mcq-body {
+                padding: 1.5rem;
+            }
+
+            .mcq-header-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚖️ Legal Profession in India</h1>
+        <p>Practice MCQs</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="notes.html">Study Notes</a></li>
+            <li><a href="detailed-notes.html">Detailed Notes</a></li>
+            <li><a href="mcqs.html" class="active">MCQs</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div class="mcq-header">
+            <h2>📚 Practice Questions (60 MCQs)</h2>
+        </div>
+
+        <div class="mcq-filters">
+            <div class="filter-group">
+                <input type="text" id="searchInput" placeholder="🔍 Search questions..." />
+                <select id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <option value="medieval">Medieval & Mughal</option>
+                    <option value="british">British Era</option>
+                    <option value="advocates-act">Advocates Act</option>
+                    <option value="bci">Bar Council of India</option>
+                    <option value="professional">Professional Ethics</option>
+                </select>
+                <button onclick="resetFilters()">Reset Filters</button>
+            </div>
+        </div>
+
+        <div class="mcq-grid" id="mcqContainer"></div>
+    </main>
+
+    <script>
+        const mcqData = [
+            {
+                num: 1,
+                category: "medieval",
+                question: "In the Mughal period, who was the final court of appeal in all matters of justice?",
+                options: ["A) Chief Justice", "B) Mufti", "C) Emperor", "D) Qazi"],
+                correct: 2,
+                explanation: "The Emperor was the final adjudicator and had absolute authority over all judicial matters in the Mughal period."
+            },
+            {
+                num: 2,
+                category: "medieval",
+                question: "In ancient and medieval India, legal representatives were known as?",
+                options: ["A) Barristers", "B) Pleaders", "C) Vakils", "D) Solicitors"],
+                correct: 2,
+                explanation: "Vakils were the legal representatives during medieval India who represented parties in disputes and legal matters."
+            },
+            {
+                num: 3,
+                category: "medieval",
+                question: "The Qazi in Islamic law was primarily responsible for?",
+                options: ["A) Revenue collection", "B) Military affairs", "C) Adjudication and justice", "D) Tax audit"],
+                correct: 2,
+                explanation: "The Qazi was the Islamic judge responsible for administering justice according to Sharia law."
+            },
+            {
+                num: 4,
+                category: "british",
+                question: "The first Supreme Court in India was established in?",
+                options: ["A) 1726 in Calcutta", "B) 1750 in Madras", "C) 1773 in Delhi", "D) 1800 in Bombay"],
+                correct: 0,
+                explanation: "The first Supreme Court was established in 1726 in Calcutta under the British rule."
+            },
+            {
+                num: 5,
+                category: "british",
+                question: "Which act established the High Courts in India?",
+                options: ["A) Indian Councils Act 1861", "B) High Courts Act 1861", "C) Judicial Commission Act 1850", "D) Crown Courts Act 1773"],
+                correct: 1,
+                explanation: "The High Courts Act of 1861 established the High Courts in India."
+            },
+            {
+                num: 6,
+                category: "british",
+                question: "The first Law Commission of India was established in?",
+                options: ["A) 1825", "B) 1833", "C) 1850", "D) 1876"],
+                correct: 1,
+                explanation: "The first Law Commission was established in 1833 to codify Indian laws."
+            },
+            {
+                num: 7,
+                category: "british",
+                question: "Who was the first Law Commission Chairman to codify Indian laws?",
+                options: ["A) John Stuart Mill", "B) Thomas Macaulay", "C) James Fitzjames Stephen", "D) Henry Maine"],
+                correct: 1,
+                explanation: "Thomas Macaulay was the first Law Commission Chairman who led the codification efforts."
+            },
+            {
+                num: 8,
+                category: "advocates-act",
+                question: "The Advocates Act was passed in which year?",
+                options: ["A) 1951", "B) 1959", "C) 1961", "D) 1965"],
+                correct: 2,
+                explanation: "The Advocates Act was passed in 1961 to regulate the legal profession in India."
+            },
+            {
+                num: 9,
+                category: "advocates-act",
+                question: "What is the primary purpose of the Advocates Act 1961?",
+                options: ["A) To collect taxes from lawyers", "B) To regulate the legal profession", "C) To create courts", "D) To codify laws"],
+                correct: 1,
+                explanation: "The Advocates Act 1961 was enacted to regulate and control the legal profession in India."
+            },
+            {
+                num: 10,
+                category: "advocates-act",
+                question: "Under Section 24 of the Advocates Act, what are advocates prohibited from doing?",
+                options: ["A) Practicing part-time", "B) Appearing before courts", "C) Practicing as solicitors simultaneously", "D) Charging fees"],
+                correct: 2,
+                explanation: "Section 24 prohibits advocates from practicing as solicitors at the same time."
+            },
+            {
+                num: 11,
+                category: "advocates-act",
+                question: "The eligibility for enrollment as an advocate requires completion of?",
+                options: ["A) Bachelor's degree", "B) Law degree of minimum 3 years", "C) Master's degree", "D) Any postgraduate degree"],
+                correct: 1,
+                explanation: "A person must have a law degree of at least 3 years and pass the bar examination to be enrolled."
+            },
+            {
+                num: 12,
+                category: "bci",
+                question: "When was the Bar Council of India established?",
+                options: ["A) 1961", "B) 1965", "C) 1970", "D) 1975"],
+                correct: 0,
+                explanation: "The Bar Council of India was established in 1961 as the apex regulatory body for the legal profession."
+            },
+            {
+                num: 13,
+                category: "bci",
+                question: "The Bar Council of India has how many members in total?",
+                options: ["A) 25 members", "B) 35 members", "C) 45 members", "D) 55 members"],
+                correct: 2,
+                explanation: "The Bar Council of India comprises 45 members representing various Bar Councils and interests."
+            },
+            {
+                num: 14,
+                category: "bci",
+                question: "Who presides over the Bar Council of India?",
+                options: ["A) Chief Justice of India", "B) Attorney General", "C) Chairperson elected by members", "D) President of India"],
+                correct: 2,
+                explanation: "The Chairperson of BCI is elected by the council members for a fixed tenure."
+            },
+            {
+                num: 15,
+                category: "bci",
+                question: "The Bar Council of India is responsible for?",
+                options: ["A) Only collecting fees", "B) Regulatory and appellate functions", "C) Making laws only", "D) Collecting taxes"],
+                correct: 1,
+                explanation: "BCI is responsible for regulating the legal profession and handling disciplinary matters."
+            },
+            {
+                num: 16,
+                category: "professional",
+                question: "How many State Bar Councils are there in India?",
+                options: ["A) 15", "B) 20", "C) 27", "D) 35"],
+                correct: 2,
+                explanation: "There are 27 State Bar Councils corresponding to the Indian states and union territories."
+            },
+            {
+                num: 17,
+                category: "professional",
+                question: "An advocate can be enrolled on the rolls of which authority?",
+                options: ["A) Bar Council of India only", "B) State Bar Council only", "C) District Bar Council", "D) Supreme Court"],
+                correct: 1,
+                explanation: "Advocates are enrolled on the rolls of the State Bar Council of their jurisdiction."
+            },
+            {
+                num: 18,
+                category: "professional",
+                question: "The minimum qualification to practice as an advocate is?",
+                options: ["A) 12th pass", "B) Bachelor's degree", "C) Bachelor of Laws (LL.B)", "D) Master's degree"],
+                correct: 2,
+                explanation: "A person must have Bachelor of Laws (LL.B) degree to practice as an advocate."
+            },
+            {
+                num: 19,
+                category: "professional",
+                question: "Which section defines the meaning of 'Advocate' in the Advocates Act?",
+                options: ["A) Section 2", "B) Section 5", "C) Section 10", "D) Section 15"],
+                correct: 0,
+                explanation: "Section 2 of the Advocates Act contains the definition of 'Advocate'."
+            },
+            {
+                num: 20,
+                category: "professional",
+                question: "An advocate must maintain which of the following?",
+                options: ["A) Personal account only", "B) Separate client account", "C) Multiple accounts", "D) No specific account"],
+                correct: 1,
+                explanation: "Advocates must maintain a separate account for client funds as per professional rules."
+            },
+            {
+                num: 21,
+                category: "professional",
+                question: "The Advocates Act applies to?",
+                options: ["A) Only judges", "B) All advocates practicing before courts", "C) Government officials", "D) Businesspeople"],
+                correct: 1,
+                explanation: "The Advocates Act applies to all persons enrolled as advocates under it."
+            },
+            {
+                num: 22,
+                category: "advocates-act",
+                question: "Which section provides for the right of audience in court?",
+                options: ["A) Section 25", "B) Section 28", "C) Section 29", "D) Section 30"],
+                correct: 2,
+                explanation: "Section 29 of the Advocates Act provides for the right of audience before courts."
+            },
+            {
+                num: 23,
+                category: "professional",
+                question: "An advocate cannot refuse a brief except in certain circumstances. Which is not one?",
+                options: ["A) Conflict of interest", "B) Personal hostility to client", "C) Lack of knowledge", "D) Lack of fees"],
+                correct: 3,
+                explanation: "Lack of fees is not a valid ground. Professional duty requires advocates to take cases."
+            },
+            {
+                num: 24,
+                category: "professional",
+                question: "What should an advocate do if they have a conflict of interest?",
+                options: ["A) Proceed with the case", "B) Inform the court later", "C) Withdraw from the case", "D) Refer to another advocate secretly"],
+                correct: 2,
+                explanation: "An advocate must immediately withdraw from the case if a conflict of interest arises."
+            },
+            {
+                num: 25,
+                category: "professional",
+                question: "Which conduct is prohibited for advocates under professional ethics?",
+                options: ["A) Providing legal advice", "B) Appearing before courts", "C) Canvassing for business", "D) Maintaining records"],
+                correct: 2,
+                explanation: "Advocates are prohibited from canvassing or advertising for business according to professional rules."
+            },
+            {
+                num: 26,
+                category: "professional",
+                question: "An advocate's primary duty is to?",
+                options: ["A) Earn maximum fees", "B) Win all cases", "C) The administration of justice", "D) Support the government"],
+                correct: 2,
+                explanation: "An advocate's primary duty is to the administration of justice, not just to the client."
+            },
+            {
+                num: 27,
+                category: "professional",
+                question: "Advocates have the privilege of?",
+                options: ["A) Tax exemption", "B) Free audience before court", "C) Immunity from law", "D) Government salary"],
+                correct: 1,
+                explanation: "Advocates have the privilege of free audience before court with priority hearing."
+            },
+            {
+                num: 28,
+                category: "professional",
+                question: "An advocate shall not accept a brief if they are?",
+                options: ["A) Busy with other cases", "B) A witness or have personal interest", "C) Tired", "D) Unfamiliar with location"],
+                correct: 1,
+                explanation: "An advocate cannot accept a brief where they are a witness or have personal interest."
+            },
+            {
+                num: 29,
+                category: "bci",
+                question: "Which body hears disciplinary cases against advocates?",
+                options: ["A) District Court", "B) Disciplinary Committee of Bar Council", "C) Supreme Court directly", "D) Police"],
+                correct: 1,
+                explanation: "Disciplinary Committees of Bar Councils hear cases against advocates."
+            },
+            {
+                num: 30,
+                category: "professional",
+                question: "From a disciplinary committee order, an appeal goes to which body first?",
+                options: ["A) Supreme Court", "B) High Court", "C) Bar Council of India", "D) State Government"],
+                correct: 2,
+                explanation: "From State Bar Council Disciplinary Committee, appeal goes to Bar Council of India."
+            },
+            {
+                num: 31,
+                category: "medieval",
+                question: "Which of the following was the primary source of Hindu law during medieval India?",
+                options: ["A) Royal decrees only", "B) Administrative codes", "C) Vedas, Dharma Satra, and Astha Satra", "D) Foreign law principles"],
+                correct: 2,
+                explanation: "Hindu law was based on Vedas, Dharma Satra (ethical duties), and Astha Satra (administration)."
+            },
+            {
+                num: 32,
+                category: "medieval",
+                question: "The function of a Mufti in the Mughal period was to?",
+                options: ["A) Collect taxes", "B) Provide authoritative legal opinions and advise on Islamic law", "C) Command military forces", "D) Manage trade routes"],
+                correct: 1,
+                explanation: "The Mufti provided authoritative legal opinions (Fatwa) on Islamic law matters."
+            },
+            {
+                num: 33,
+                category: "medieval",
+                question: "Panchayats in medieval villages primarily dealt with?",
+                options: ["A) Revenue collection only", "B) Local disputes and justice administration", "C) Military matters", "D) Foreign trade"],
+                correct: 1,
+                explanation: "Panchayats were village councils that administered local justice based on customs."
+            },
+            {
+                num: 34,
+                category: "british",
+                question: "The Indian High Courts Act of 1861 abolished which of the following courts?",
+                options: ["A) District courts only", "B) Crown Courts and Sadar Adalats", "C) All municipal courts", "D) Panchayat courts"],
+                correct: 1,
+                explanation: "The act abolished Crown Courts and Sadar Adalats, replacing them with High Courts."
+            },
+            {
+                num: 35,
+                category: "british",
+                question: "The Legal Practitioners Act of 1879 primarily regulated?",
+                options: ["A) Only judges", "B) Advocates, pleaders, and legal practitioners", "C) Police officers", "D) Government officials"],
+                correct: 1,
+                explanation: "The Legal Practitioners Act 1879 was the first comprehensive act to regulate legal practitioners."
+            },
+            {
+                num: 36,
+                category: "british",
+                question: "During which period was legal representation mainly done by Vakils in British India?",
+                options: ["A) Only after 1850", "B) Pre-British and throughout British era", "C) Only from 1926", "D) Only after 1961"],
+                correct: 1,
+                explanation: "Vakils served throughout the British period until the Advocates Act 1961."
+            },
+            {
+                num: 37,
+                category: "advocates-act",
+                question: "Can a person be enrolled as an advocate on the role of more than one State Bar Council simultaneously?",
+                options: ["A) No, enrollment is limited to one State Bar Council", "B) Yes, if approved by BCI", "C) Yes, in adjacent states only", "D) Yes, if fees are paid"],
+                correct: 0,
+                explanation: "A person can only be enrolled with ONE State Bar Council at a time."
+            },
+            {
+                num: 38,
+                category: "advocates-act",
+                question: "How is seniority primarily determined for advocates enrolled on the same date?",
+                options: ["A) By age of the advocate", "B) By practice experience", "C) By time of enrollment in their court", "D) By number of cases"],
+                correct: 2,
+                explanation: "Seniority is determined by the time of enrollment in their respective courts."
+            },
+            {
+                num: 39,
+                category: "bci",
+                question: "What is the role of the Bar Council of India in relation to State Bar Councils?",
+                options: ["A) Replace them entirely", "B) Supervisory, appellate, and coordinating authority", "C) Only collect fees", "D) Conduct local trials"],
+                correct: 1,
+                explanation: "BCI serves as the supervisory and appellate authority for all State Bar Councils."
+            },
+            {
+                num: 40,
+                category: "bci",
+                question: "Under which section does BCI have the power to recognize law universities?",
+                options: ["A) Section 2", "B) Section 7", "C) Section 15", "D) Section 25"],
+                correct: 0,
+                explanation: "Section 2 of the Advocates Act provides BCI power to recognize law universities."
+            },
+            {
+                num: 41,
+                category: "professional",
+                question: "What does the term 'Free Audience' mean in advocate's rights?",
+                options: ["A) Right to speak for free", "B) Right to sit in courtroom", "C) Right to be heard before others with priority", "D) Right to attend proceedings"],
+                correct: 2,
+                explanation: "Free audience means the right to stand before court and argue with priority."
+            },
+            {
+                num: 42,
+                category: "professional",
+                question: "Which official has the highest right of free audience in courts?",
+                options: ["A) Attorney General of India", "B) Chief Justice of India", "C) Solicitor General alone", "D) Senior Advocates only"],
+                correct: 0,
+                explanation: "The Attorney General has the highest priority for free audience before courts."
+            },
+            {
+                num: 43,
+                category: "professional",
+                question: "An advocate should not accept a brief in a case if they?",
+                options: ["A) Are very busy", "B) Live far from court", "C) Are a witness or have personal interest", "D) Have not studied that area"],
+                correct: 2,
+                explanation: "Conflict of interest prohibits advocates from accepting such briefs."
+            },
+            {
+                num: 44,
+                category: "advocates-act",
+                question: "Bar Council of India Rule 49 prescribes rules for?",
+                options: ["A) Enrollment only", "B) Determining fees consistent with case nature and practice", "C) Disciplinary procedures", "D) Court procedures only"],
+                correct: 1,
+                explanation: "Rule 49 prescribes rules for determining fees consistent with case nature."
+            },
+            {
+                num: 45,
+                category: "professional",
+                question: "Can an advocate be arrested in civil process while attending court?",
+                options: ["A) Yes, always", "B) Yes, with permission", "C) No, while going, attending, or returning from court", "D) Only in criminal cases"],
+                correct: 2,
+                explanation: "Advocates cannot be arrested in civil process while attending court."
+            },
+            {
+                num: 46,
+                category: "advocates-act",
+                question: "What type of right is the right to practice law in India?",
+                options: ["A) Fundamental right", "B) Constitutional right", "C) Statutory right", "D) Natural right"],
+                correct: 2,
+                explanation: "The right to practice law is a statutory right conferred by the Advocates Act."
+            },
+            {
+                num: 47,
+                category: "professional",
+                question: "Which section provides that only advocates can practice law?",
+                options: ["A) Section 29", "B) Section 30", "C) Section 32", "D) Section 35"],
+                correct: 0,
+                explanation: "Section 29 provides that only advocates are entitled to practice before court."
+            },
+            {
+                num: 48,
+                category: "professional",
+                question: "When can non-advocates appear before court on behalf of a party?",
+                options: ["A) Never", "B) Always", "C) With prior permission of the court (Section 32)", "D) Only in small cases"],
+                correct: 2,
+                explanation: "Non-advocates can appear with prior permission of the court under Section 32."
+            },
+            {
+                num: 49,
+                category: "professional",
+                question: "What is the legal status of the legal profession in India?",
+                options: ["A) A business", "B) A noble profession", "C) A trade", "D) Public service"],
+                correct: 1,
+                explanation: "The legal profession is recognized as a noble profession with special duties."
+            },
+            {
+                num: 50,
+                category: "bci",
+                question: "A person who is a citizen of another country may be admitted as advocate in India if?",
+                options: ["A) They have Indian parents", "B) They pass a test", "C) There is reciprocity and recognition", "D) They work for international organization"],
+                correct: 2,
+                explanation: "Foreign citizens can be admitted if there is reciprocity and qualification recognition."
+            },
+            {
+                num: 51,
+                category: "professional",
+                question: "Where must client funds be kept according to professional ethics?",
+                options: ["A) In advocate's personal account", "B) In office drawer", "C) In separate account", "D) With the court"],
+                correct: 2,
+                explanation: "Client funds must be kept in a separate account for safety and transparency."
+            },
+            {
+                num: 52,
+                category: "professional",
+                question: "An advocate shall not buy property in litigation they handle due to?",
+                options: ["A) Personal preference", "B) Lack of funds", "C) Conflict of interest", "D) Court restriction"],
+                correct: 2,
+                explanation: "Conflict of interest prohibits such purchases to avoid impropriety."
+            },
+            {
+                num: 53,
+                category: "professional",
+                question: "What does discipline in the legal profession ensure?",
+                options: ["A) Lower fees", "B) Faster case resolution", "C) Integrity of profession and public confidence", "D) Government control"],
+                correct: 2,
+                explanation: "Discipline ensures integrity and maintains public confidence in the legal system."
+            },
+            {
+                num: 54,
+                category: "professional",
+                question: "What is the ultimate goal of the legal profession?",
+                options: ["A) Earning maximum fees", "B) Winning all cases", "C) Administration of justice and upholding rule of law", "D) Protecting government interests"],
+                correct: 2,
+                explanation: "The ultimate goal is proper administration of justice and upholding rule of law."
+            },
+            {
+                num: 55,
+                category: "british",
+                question: "The British legal system introduced the concept of?",
+                options: ["A) Caste system", "B) Customary justice", "C) Rule of law", "D) Religious justice"],
+                correct: 2,
+                explanation: "The British introduced the concept of rule of law to India."
+            },
+            {
+                num: 56,
+                category: "professional",
+                question: "Which period did public interest litigation develop in India?",
+                options: ["A) British era", "B) Medieval period", "C) Independent India period", "D) Mughal era"],
+                correct: 2,
+                explanation: "PIL developed during independent India as a tool for social justice."
+            },
+            {
+                num: 57,
+                category: "bci",
+                question: "Which body prescribes standards of legal education in India?",
+                options: ["A) Ministry of Education", "B) Bar Council of India", "C) State governments", "D) Supreme Court"],
+                correct: 1,
+                explanation: "The Bar Council of India prescribes standards of legal education."
+            },
+            {
+                num: 58,
+                category: "advocates-act",
+                question: "The Advocates Act provides for a?",
+                options: ["A) Separate class of barristers", "B) Separate class of solicitors", "C) Uniform legal profession", "D) Different levels of advocates"],
+                correct: 2,
+                explanation: "The Act established a uniform legal profession, abolishing previous distinctions."
+            },
+            {
+                num: 59,
+                category: "professional",
+                question: "Which section deals with punishing advocates for contempt of court?",
+                options: ["A) Section 5", "B) Section 10", "C) Section 15", "D) Section 20"],
+                correct: 1,
+                explanation: "Section 10 of the Advocates Act relates to contempt of court proceedings."
+            },
+            {
+                num: 60,
+                category: "professional",
+                question: "What is the legal classification of contempt proceedings?",
+                options: ["A) Civil proceedings", "B) Criminal proceedings", "C) Sui generis (unique character)", "D) Administrative proceedings"],
+                correct: 2,
+                explanation: "Contempt proceedings are sui generis, standing apart from ordinary civil or criminal proceedings."
+            }
+        ];
+
+        function renderMCQs(data) {
+            const container = document.getElementById('mcqContainer');
+            if (data.length === 0) {
+                container.innerHTML = '<div class="mcq-grid empty">No questions found. Try adjusting your filters.</div>';
+                return;
+            }
+            container.innerHTML = data.map(mcq => `
+                <div class="mcq-item" data-category="${mcq.category}">
+                    <div class="mcq-header-bar">
+                        <span class="mcq-number">Q${mcq.num}</span>
+                        <span class="mcq-category">${mcq.category.replace('-', ' ').toUpperCase()}</span>
+                    </div>
+                    <div class="mcq-body">
+                        <div class="mcq-question">${mcq.question}</div>
+                        <div class="mcq-options-container">
+                            ${mcq.options.map((opt, idx) => `
+                                <div class="mcq-opt" onclick="selectMCQOption(this, ${mcq.num}, ${idx}, ${mcq.correct})">
+                                    ${opt}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="mcq-footer">
+                            <button class="show-answer-btn" onclick="showMCQAnswer(this, ${mcq.num}, '${mcq.explanation.replace(/'/g, "\\'")}')">Show Answer</button>
+                        </div>
+                        <div class="answer-box" id="answer-${mcq.num}">
+                            <strong>✓ Correct Answer: ${String.fromCharCode(65 + mcq.correct)}</strong>
+                            <p>${mcq.explanation}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function selectMCQOption(element, qNum, selectedIdx, correctIdx) {
+            const container = element.closest('.mcq-body');
+            const options = container.querySelectorAll('.mcq-opt');
+            options.forEach(opt => opt.classList.remove('selected', 'correct', 'incorrect'));
+            
+            if (selectedIdx === correctIdx) {
+                element.classList.add('correct');
+            } else {
+                element.classList.add('incorrect');
+                options[correctIdx].classList.add('correct');
+            }
+            
+            const answerBox = container.querySelector(`#answer-${qNum}`);
+            answerBox.classList.add('show');
+        }
+
+        function showMCQAnswer(button, qNum, explanation) {
+            const answerBox = button.closest('.mcq-body').querySelector(`#answer-${qNum}`);
+            answerBox.classList.toggle('show');
+            button.textContent = answerBox.classList.contains('show') ? 'Hide Answer' : 'Show Answer';
+        }
+
+        function filterMCQs() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+            
+            const filtered = mcqData.filter(mcq => {
+                const matchSearch = mcq.question.toLowerCase().includes(searchText);
+                const matchCategory = !category || mcq.category === category;
+                return matchSearch && matchCategory;
+            });
+            
+            renderMCQs(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('categoryFilter').value = '';
+            renderMCQs(mcqData);
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', filterMCQs);
+        document.getElementById('categoryFilter').addEventListener('change', filterMCQs);
+
+        renderMCQs(mcqData);
+    </script>
+</body>
+</html>
