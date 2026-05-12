@@ -2279,6 +2279,7 @@ function openGiftCover() {
   <button class="music-btn" id="music-toggle-btn" onclick="toggleMusicPanel()" title="Music">🎵</button>
 </div>
 
+
 <script>
 // ── CURSOR ──
 const cur = document.getElementById('cursor');
@@ -2289,4 +2290,1363 @@ document.addEventListener('mousemove', e => {
   cur.style.left = (mx - 6) + 'px'; cur.style.top = (my - 6) + 'px';
 });
 (function animTrail() {
-  tx += (mx - tx) * 0.12; ty += (my - ty) 
+  tx += (mx - tx) * 0.12; ty += (my - ty) * 0.12;
+  trail.style.left = (tx - 15) + 'px'; trail.style.top = (ty - 15) + 'px';
+  requestAnimationFrame(animTrail);
+})();
+
+// ── STARS ──
+const canvas = document.getElementById('stars-canvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 220; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.6 + 0.2,
+      alpha: Math.random(),
+      speed: Math.random() * 0.007 + 0.002,
+      phase: Math.random() * Math.PI * 2,
+      // Occasional coloured stars
+      hue: Math.random() < 0.15
+        ? ['rgba(242,167,195,', 'rgba(197,184,240,', 'rgba(232,201,126,'][Math.floor(Math.random()*3)]
+        : 'rgba(255,245,230,'
+    });
+  }
+}
+
+// Auto shooting stars (random, periodic)
+let autoShootTimer = 0;
+function scheduleAutoShoot() {
+  autoShootTimer = setTimeout(() => {
+    fireShootingStar();
+    scheduleAutoShoot();
+  }, 2800 + Math.random() * 5000);
+}
+
+function drawStars(t) {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(s => {
+    const a = (Math.sin(t * s.speed + s.phase) + 1) / 2 * 0.85 + 0.1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `${s.hue}${a})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+
+resizeCanvas(); initStars(); drawStars(0);
+window.addEventListener('resize', () => { resizeCanvas(); initStars(); });
+
+// ── SHOOTING STAR ──
+function fireShootingStar(originX, originY) {
+  const W = window.innerWidth, H = window.innerHeight;
+
+  // If tapped: shoot FROM near the tap point; else random top-area origin
+  let sx, sy;
+  if (originX !== undefined) {
+    sx = originX - 40 + (Math.random() - 0.5) * 80;
+    sy = originY - 20 + (Math.random() - 0.5) * 40;
+  } else {
+    sx = Math.random() * W * 0.8;
+    sy = Math.random() * H * 0.35;
+  }
+
+  // Angle: mostly diagonal downward-right, slight variance
+  const angle = 15 + Math.random() * 25; // degrees
+  const len   = 120 + Math.random() * 160;
+  const travel = W * 0.35 + Math.random() * W * 0.3;
+  const dur   = 0.55 + Math.random() * 0.35;
+
+  const el = document.createElement('div');
+  el.className = 'shooting-star-el';
+  el.style.cssText = `
+    --sx: ${sx}px; --sy: ${sy}px;
+    --angle: ${angle}deg;
+    --len: ${len}px;
+    --travel: ${travel}px;
+    --dur: ${dur}s;
+    top: ${sy}px; left: ${sx}px;
+    width: ${len}px;
+    transform: rotate(${angle}deg);
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), dur * 1000 + 100);
+
+  // Spawn a tiny sparkle at the head of the star
+  setTimeout(() => {
+    const headX = sx + Math.cos(angle * Math.PI / 180) * travel;
+    const headY = sy + Math.sin(angle * Math.PI / 180) * travel;
+    ['✦','·','✧'].forEach((sym, i) => {
+      const sp = document.createElement('div');
+      sp.className = 'sparkle';
+      sp.textContent = sym;
+      sp.style.cssText = `position:fixed;left:${headX}px;top:${headY}px;
+        font-size:${0.5 + Math.random() * 0.5}rem;
+        color:rgba(255,245,220,0.9);
+        --tx:${(Math.random()-0.5)*30}px;
+        --ty:${-15 - Math.random()*20}px;
+        z-index:3;animation-duration:0.6s;`;
+      document.body.appendChild(sp);
+      setTimeout(() => sp.remove(), 700);
+    });
+  }, dur * 800);
+}
+
+// Hero tap/click → shoot a star
+document.getElementById('sec-hero').addEventListener('click', e => {
+  // Don't fire if clicking the nav toggle or a button
+  if (e.target.closest('button') || e.target.closest('#nav-toggle')) return;
+  fireShootingStar(e.clientX, e.clientY);
+});
+document.getElementById('sec-hero').addEventListener('touchstart', e => {
+  if (e.target.closest('button') || e.target.closest('#nav-toggle')) return;
+  const t = e.touches[0];
+  fireShootingStar(t.clientX, t.clientY);
+}, { passive: true });
+
+// Auto shooting stars in background
+scheduleAutoShoot();
+
+// ── FLOATING PARTICLES ──
+const symbols = ['✦', '✧', '⋆', '❋', '✿', '◌', '✻'];
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+  p.style.cssText = `left:${Math.random()*100}%;font-size:${Math.random()*14+8}px;color:${['rgba(242,167,195,0.5)','rgba(197,184,240,0.4)','rgba(232,201,126,0.4)'][Math.floor(Math.random()*3)]};animation-duration:${Math.random()*15+10}s;animation-delay:${Math.random()*10}s;`;
+  document.body.appendChild(p);
+}
+
+// ── CANDLES ──
+const candleColors = ['c1','c2','c3','c4','c5','c1','c2'];
+const heights = [60,72,56,68,64,70,58];
+let litCandles = 7;
+let audioCtx = null, analyser = null, micStream = null, listening = false, animFrame = null;
+
+function buildCandles() {
+  const row = document.getElementById('candles-row');
+  if (!row) return;
+  row.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const w = document.createElement('div');
+    w.className = `candle-wrap ${candleColors[i]}`;
+    w.id = `cw${i}`;
+    w.onclick = () => blowCandle(i);
+    w.innerHTML = `
+      <div class="flame-wrap" id="fw${i}">
+        <div class="smoke" id="sm${i}">
+          <div class="smoke-puff"></div><div class="smoke-puff"></div><div class="smoke-puff"></div>
+        </div>
+        <div class="flame"><div class="flame-inner"></div></div>
+      </div>
+      <div class="candle-wick"></div>
+      <div class="candle-body" style="height:${heights[i]}px"><div class="candle-drip"></div></div>`;
+    row.appendChild(w);
+  }
+}
+
+function blowCandle(i) {
+  const fw = document.getElementById(`fw${i}`);
+  const sm = document.getElementById(`sm${i}`);
+  if (!fw || fw._blown) return;
+  fw._blown = true;
+  fw.style.opacity = '0';
+  sm.style.opacity = '1';
+  setTimeout(() => { sm.style.opacity = '0'; }, 1800);
+  litCandles--;
+  spawnSparkles(fw);
+  updateCandleStatus();
+  if (litCandles <= 0) onAllBlown();
+}
+
+function spawnSparkles(el) {
+  const rect = el.getBoundingClientRect();
+  const scrollY = window.scrollY || window.pageYOffset;
+  const scrollX = window.scrollX || window.pageXOffset;
+  const cx = rect.left + scrollX + rect.width / 2;
+  const cy = rect.top + scrollY + rect.height / 2;
+  ['✦','✧','⋆','*'].forEach((sym, j) => {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    s.textContent = sym;
+    s.style.cssText = `position:absolute;left:${cx}px;top:${cy}px;color:${['#f2a7c3','#e8c97e','#c5b8f0','#fff'][j]};--tx:${(Math.random()-0.5)*80}px;--ty:${-40-Math.random()*40}px`;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  });
+}
+
+function updateCandleStatus() {
+  const st = document.getElementById('candle-status');
+  if (litCandles === 7) st.textContent = 'Ready to make a wish?';
+  else if (litCandles > 0) st.textContent = `${litCandles} candle${litCandles > 1 ? 's' : ''} left — keep blowing!`;
+  else st.textContent = '';
+}
+
+function onAllBlown() {
+  stopMic();
+  document.getElementById('blown-msg').style.display = 'flex';
+  const btn = document.getElementById('mic-btn');
+  btn.style.opacity = '0.3'; btn.style.pointerEvents = 'none';
+
+  // Stage 1: immediate confetti burst
+  launchConfetti();
+  setTimeout(launchConfetti, 400);
+  setTimeout(launchConfetti, 800);
+
+  // Stage 2: show the wish overlay after a short celebratory pause
+  setTimeout(() => {
+    const overlay = document.getElementById('wish-overlay');
+    overlay.classList.add('show');
+    // Keep firing confetti while overlay is visible
+    setTimeout(launchConfetti, 200);
+    setTimeout(launchConfetti, 700);
+    setTimeout(launchConfetti, 1400);
+  }, 1200);
+}
+
+function closeWishOverlay() {
+  const overlay = document.getElementById('wish-overlay');
+  overlay.style.transition = 'opacity 0.5s ease';
+  overlay.style.opacity = '0';
+  setTimeout(() => {
+    overlay.classList.remove('show');
+    overlay.style.opacity = '';
+    overlay.style.transition = '';
+  }, 500);
+}
+
+async function toggleMic() {
+  if (litCandles <= 0) return;
+  if (listening) { stopMic(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = stream;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    const src = audioCtx.createMediaStreamSource(stream);
+    src.connect(analyser);
+    listening = true;
+    const btn = document.getElementById('mic-btn');
+    btn.classList.add('listening');
+    document.getElementById('mic-label').textContent = 'Blow now... (tap to stop)';
+    document.getElementById('vol-bar').classList.add('active');
+    document.getElementById('candle-status').textContent = 'Listening... blow into your mic!';
+    loopAnalyse();
+  } catch (e) {
+    document.getElementById('candle-status').textContent = 'Mic not available — tap a candle to blow it out!';
+  }
+}
+
+function stopMic() {
+  listening = false;
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+  const btn = document.getElementById('mic-btn');
+  btn.classList.remove('listening');
+  document.getElementById('mic-label').textContent = 'Blow out the candles';
+  document.getElementById('vol-bar').classList.remove('active');
+  if (litCandles > 0) document.getElementById('candle-status').textContent = `${litCandles} candle${litCandles > 1 ? 's' : ''} still lit — try again?`;
+}
+
+let lastBlow = 0;
+function loopAnalyse() {
+  const vbars = ['vb1','vb2','vb3','vb4','vb5','vb6','vb7'].map(id => document.getElementById(id)).filter(Boolean);
+  if (!listening) return;
+  const data = new Uint8Array(analyser.frequencyBinCount);
+  analyser.getByteFrequencyData(data);
+  const avg = data.reduce((a, b) => a + b, 0) / data.length;
+  const norm = Math.min(avg / 80, 1);
+  vbars.forEach((b, i) => {
+    const h = 4 + Math.round(norm * 20 * (0.5 + Math.sin(i * 0.8 + Date.now() * 0.003) * 0.5));
+    b.style.height = h + 'px';
+  });
+  if (avg > 22 && Date.now() - lastBlow > 350) {
+    lastBlow = Date.now();
+    const unblown = [];
+    for (let i = 0; i < 7; i++) { const fw = document.getElementById(`fw${i}`); if (fw && !fw._blown) unblown.push(i); }
+    if (unblown.length > 0) {
+      const toBlow = avg > 55 ? unblown.slice(0, 2) : [unblown[0]];
+      toBlow.forEach(i => blowCandle(i));
+    }
+  }
+  animFrame = requestAnimationFrame(loopAnalyse);
+}
+
+// ── PHOTOS ──
+const gallery = document.getElementById('gallery');
+const emptyMsg = document.getElementById('gallery-empty');
+const photos = [];
+
+document.getElementById('photo-input').addEventListener('change', e => {
+  Array.from(e.target.files).forEach(file => addPhoto(file));
+  e.target.value = '';
+});
+
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('drag-over'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('drag-over'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('drag-over');
+  Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')).forEach(addPhoto);
+});
+
+function addPhoto(file) {
+  const url = URL.createObjectURL(file);
+  const id = Date.now() + Math.random();
+  photos.push({ id, url });
+  renderGallery();
+  showToast('Photo added ✦');
+}
+
+function renderGallery() {
+  gallery.innerHTML = '';
+  emptyMsg.style.display = photos.length ? 'none' : 'block';
+  photos.forEach(p => {
+    const item = document.createElement('div');
+    item.className = 'gallery-item';
+    item.innerHTML = `<img src="${p.url}" alt="Memory" loading="lazy">
+      <div class="caption-overlay">✦ A beautiful memory ✦</div>
+      <button class="remove-btn" onclick="removePhoto('${p.id}', event)" title="Remove">✕</button>`;
+    item.querySelector('img').addEventListener('click', () => openLightbox(p.url));
+    gallery.appendChild(item);
+  });
+}
+renderGallery();
+
+function removePhoto(id, e) {
+  e.stopPropagation();
+  const idx = photos.findIndex(p => p.id == id);
+  if (idx !== -1) { URL.revokeObjectURL(photos[idx].url); photos.splice(idx, 1); }
+  renderGallery();
+}
+
+// ── LIGHTBOX ──
+const lightbox = document.getElementById('lightbox');
+const lbImg = document.getElementById('lightbox-img');
+function openLightbox(src) { lbImg.src = src; lightbox.classList.add('active'); }
+function closeLightbox() { lightbox.classList.remove('active'); }
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ── MAGIC 8-BALL ──
+const fortunes = [
+  { text: "This year you will bloom into the most radiant version of yourself — the world is ready for you.", stars: 5 },
+  { text: "Love finds you in unexpected places this year. Open your heart wide.", stars: 5 },
+  { text: "A dream you have almost given up on is closer than you think. Hold on.", stars: 4 },
+  { text: "Great joy awaits in the small moments — a laugh, a song, a quiet afternoon.", stars: 5 },
+  { text: "You will surprise yourself with your own courage this year.", stars: 4 },
+  { text: "Someone you meet this year will change your life in the most beautiful way.", stars: 5 },
+  { text: "This is the year you finally give yourself the kindness you so freely give to others.", stars: 5 },
+  { text: "Adventure calls your name in a whisper. Say yes when it speaks.", stars: 4 },
+  { text: "The universe has been weaving something wonderful for you. It arrives this year.", stars: 5 },
+  { text: "Your light attracts the right people, the right paths, the right magic.", stars: 4 },
+  { text: "Healing and happiness walk hand in hand with you through every season ahead.", stars: 5 },
+  { text: "This year holds a chapter so beautiful, future-you will smile remembering it.", stars: 5 },
+  { text: "Trust the timing. Everything unfolding is exactly as it should be.", stars: 4 },
+  { text: "A wish you whispered long ago is about to find its answer.", stars: 5 },
+  { text: "You will dance, you will laugh, you will absolutely shine — this year belongs to you.", stars: 5 },
+];
+
+let ballRevealed = false, usedFortunes = [];
+
+function shakeBall() {
+  if (ballRevealed) return;
+  const wrap = document.getElementById('ball-wrap');
+  const outer = document.getElementById('ball-outer');
+  wrap.classList.remove('ball-shake');
+  void wrap.offsetWidth;
+  wrap.classList.add('ball-shake');
+  let available = fortunes.map((_, i) => i).filter(i => !usedFortunes.includes(i));
+  if (available.length === 0) { usedFortunes = []; available = fortunes.map((_, i) => i); }
+  const fi = available[Math.floor(Math.random() * available.length)];
+  usedFortunes.push(fi);
+  const f = fortunes[fi];
+  document.getElementById('fortune-text').textContent = f.text;
+  document.getElementById('fortune-stars').innerHTML = Array(f.stars).fill('<span>✦</span>').join('');
+  setTimeout(() => {
+    outer.classList.add('ball-revealing');
+    ballRevealed = true;
+    document.getElementById('fortune-counter').textContent = `Fortune #${usedFortunes.length} revealed`;
+    document.getElementById('reset-btn').style.display = 'inline-block';
+    document.getElementById('ball-hint').style.opacity = '0';
+    spawnBallSparkles();
+  }, 400);
+}
+
+function resetBall() {
+  document.getElementById('ball-outer').classList.remove('ball-revealing');
+  ballRevealed = false;
+  document.getElementById('reset-btn').style.display = 'none';
+  document.getElementById('ball-hint').style.opacity = '1';
+  document.getElementById('ball-hint').textContent = 'Ask another question, then click...';
+}
+
+function spawnBallSparkles() {
+  const wrap = document.getElementById('ball-wrap');
+  if (!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  const scrollY = window.scrollY || window.pageYOffset;
+  const scrollX = window.scrollX || window.pageXOffset;
+  const cx = rect.left + scrollX + rect.width / 2;
+  const cy = rect.top + scrollY + rect.height / 2;
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    const angle = (i / 12) * Math.PI * 2;
+    const dist = 60 + Math.random() * 50;
+    s.textContent = ['✦','✧','⋆','*','❋'][Math.floor(Math.random() * 5)];
+    s.style.cssText = `position:absolute;left:${cx}px;top:${cy}px;font-size:${0.8+Math.random()*0.8}rem;color:${['#f2a7c3','#e8c97e','#c5b8f0'][i%3]};--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;animation-duration:${0.7+Math.random()*0.4}s`;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 1200);
+  }
+}
+
+// ── MAIN WISH EDIT ──
+function editMainWish() {
+  const txt = document.getElementById('main-wish-text');
+  const frm = document.getElementById('main-wish-from');
+  const newTxt = prompt('Edit the main message:', txt.textContent);
+  if (newTxt && newTxt.trim()) txt.textContent = newTxt.trim();
+  const newFrom = prompt('Edit the "from" line:', frm.textContent);
+  if (newFrom && newFrom.trim()) frm.textContent = newFrom.trim();
+}
+
+// ── WRITE WISHES ──
+const wishList = [];
+function addWish() {
+  const name = document.getElementById('wisher-name').value.trim();
+  const msg = document.getElementById('wish-input').value.trim();
+  if (!msg) { showToast('Write something first 🌸'); return; }
+  wishList.unshift({ name: name || 'A dear friend', msg, id: Date.now() });
+  renderWishes();
+  document.getElementById('wisher-name').value = '';
+  document.getElementById('wish-input').value = '';
+  launchConfetti();
+  showToast('Your wish was sent with love 💫');
+}
+function renderWishes() {
+  const container = document.getElementById('saved-wishes');
+  container.innerHTML = wishList.map(w => `
+    <div class="saved-wish-card">
+      <div class="wish-author">✦ ${w.name}</div>
+      <div class="wish-body">${w.msg}</div>
+      <button class="delete-wish" onclick="deleteWish(${w.id})">✕</button>
+    </div>`).join('');
+}
+function deleteWish(id) {
+  const i = wishList.findIndex(w => w.id === id);
+  if (i !== -1) wishList.splice(i, 1);
+  renderWishes();
+}
+
+// ── CONFETTI ──
+function launchConfetti() {
+  const colors = ['#f2a7c3','#c5b8f0','#e8c97e','#a8d8ea','#ffffff','#d8b4fe'];
+  for (let i = 0; i < 50; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti-piece';
+    c.style.cssText = `left:${Math.random()*100}vw;top:${Math.random()*40}vh;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};width:${Math.random()*8+4}px;height:${Math.random()*8+4}px;animation-duration:${Math.random()*1.5+1}s;animation-delay:${Math.random()*0.5}s;`;
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 2500);
+  }
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════
+// 🎵 MUSIC PLAYER
+// ══════════════════════════════════════
+const tracks = [
+  { name: 'Clair de Lune — Debussy', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3' },
+  { name: 'Peaceful Birthday Melody', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3' },
+  { name: 'Starlight Serenade', url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3' },
+];
+let musicAudio = new Audio();
+musicAudio.volume = 0.5;
+let currentTrack = 0, musicPlaying = false, musicPanelOpen = false;
+let musicVizInterval = null;
+
+function toggleMusicPanel() {
+  musicPanelOpen = !musicPanelOpen;
+  const panel = document.getElementById('music-panel');
+  panel.classList.toggle('open', musicPanelOpen);
+}
+
+function loadTrack(idx) {
+  currentTrack = idx;
+  const t = tracks[currentTrack];
+  musicAudio.src = t.url;
+  document.getElementById('music-track-name').textContent = t.name;
+}
+
+function toggleMusic() {
+  if (musicPlaying) {
+    musicAudio.pause();
+    musicPlaying = false;
+    document.getElementById('music-play-pause').textContent = '▶';
+    document.getElementById('music-toggle-btn').classList.remove('playing');
+    stopMusicViz();
+  } else {
+    if (!musicAudio.src) loadTrack(0);
+    musicAudio.play().catch(() => {});
+    musicPlaying = true;
+    document.getElementById('music-play-pause').textContent = '⏸';
+    document.getElementById('music-toggle-btn').classList.add('playing');
+    startMusicViz();
+  }
+}
+
+function nextTrack() {
+  currentTrack = (currentTrack + 1) % tracks.length;
+  loadTrack(currentTrack);
+  if (musicPlaying) musicAudio.play().catch(() => {});
+}
+function prevTrack() {
+  currentTrack = (currentTrack - 1 + tracks.length) % tracks.length;
+  loadTrack(currentTrack);
+  if (musicPlaying) musicAudio.play().catch(() => {});
+}
+function setVolume(v) { musicAudio.volume = parseFloat(v); }
+function seekMusic(e) {
+  if (!musicAudio.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  musicAudio.currentTime = pct * musicAudio.duration;
+}
+musicAudio.addEventListener('timeupdate', () => {
+  if (!musicAudio.duration) return;
+  const pct = (musicAudio.currentTime / musicAudio.duration) * 100;
+  document.getElementById('music-progress-fill').style.width = pct + '%';
+});
+musicAudio.addEventListener('ended', () => nextTrack());
+
+function startMusicViz() {
+  const bars = ['mb1','mb2','mb3','mb4','mb5','mb6','mb7'].map(id => document.getElementById(id));
+  musicVizInterval = setInterval(() => {
+    bars.forEach(b => {
+      const h = 3 + Math.random() * 18;
+      b.style.height = h + 'px';
+      b.style.background = `hsl(${280 + Math.random()*60}, 60%, 70%)`;
+    });
+  }, 120);
+}
+function stopMusicViz() {
+  clearInterval(musicVizInterval);
+  ['mb1','mb2','mb3','mb4','mb5','mb6','mb7'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.style.height = '3px';
+  });
+}
+loadTrack(0);
+
+// ══════════════════════════════════════
+// 🎁 GIFT UNWRAP
+// ══════════════════════════════════════
+let giftUnwrapped = false;
+function unwrapGift() {
+  if (giftUnwrapped) return;
+  giftUnwrapped = true;
+  const lid = document.getElementById('gift-lid');
+  const wrap = document.getElementById('gift-box-wrap');
+  const hint = document.getElementById('gift-hint');
+  const stage = document.getElementById('gift-stage');
+  const msgEl = document.getElementById('gift-message');
+
+  hint.style.opacity = '0';
+  // Fly lid upward
+  lid.style.transition = 'transform 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.6s ease';
+  lid.style.transform = 'translateY(-120px) rotate(-15deg) scale(1.1)';
+  lid.style.opacity = '0';
+
+  // Launch ribbon pieces
+  const ribbonSymbols = ['🎀','✨','🌸','💫','⭐','🌟','💖'];
+  const boxRect = wrap.getBoundingClientRect();
+  const cx = boxRect.left + boxRect.width / 2;
+  const cy = boxRect.top + boxRect.height / 2;
+  for (let i = 0; i < 20; i++) {
+    const r = document.createElement('div');
+    r.className = 'ribbon-fly';
+    r.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;font-size:${1.2+Math.random()}rem;pointer-events:none;z-index:9991;--rfx:${(Math.random()-0.5)*300}px;--rfy:${-80-Math.random()*200}px;--rfr:${(Math.random()-0.5)*720}deg;animation:ribbon-fly 1.2s ease-out ${i*0.05}s forwards;`;
+    r.textContent = ribbonSymbols[Math.floor(Math.random() * ribbonSymbols.length)];
+    document.body.appendChild(r);
+    setTimeout(() => r.remove(), 2000);
+  }
+
+  setTimeout(() => {
+    wrap.style.transition = 'all 0.6s ease';
+    wrap.style.opacity = '0';
+    wrap.style.transform = 'scale(0.5) translateY(30px)';
+  }, 500);
+
+  setTimeout(() => {
+    stage.innerHTML = '';
+    msgEl.style.display = 'flex';
+    launchConfetti();
+    setTimeout(launchConfetti, 400);
+    setTimeout(launchConfetti, 800);
+  }, 1000);
+}
+
+function editGiftMessage() {
+  const txt = document.getElementById('gift-text');
+  const from = document.getElementById('gift-from');
+  const newTxt = prompt('Edit your gift message:', txt.textContent);
+  if (newTxt && newTxt.trim()) txt.textContent = newTxt.trim();
+  const newFrom = prompt('Edit the "from" line:', from.textContent);
+  if (newFrom && newFrom.trim()) from.textContent = newFrom.trim();
+}
+
+// ══════════════════════════════════════
+// 💎 SCRATCH CARD
+// ══════════════════════════════════════
+const scratchFortunes = [
+  { icon: '💖', msg: 'You are deeply loved by more people than you will ever know.', sub: '✦ your year is golden ✦' },
+  { icon: '🌙', msg: 'A beautiful chapter is just beginning — your best days are still ahead.', sub: '✦ the stars agree ✦' },
+  { icon: '✨', msg: 'Something you\'ve been hoping for is quietly making its way to you right now.', sub: '✦ trust the journey ✦' },
+  { icon: '🌸', msg: 'This year, you will bloom in ways you never imagined possible.', sub: '✦ magic is real ✦' },
+  { icon: '🦋', msg: 'You are exactly where you need to be — and wonderful things are coming.', sub: '✦ believe it ✦' },
+  { icon: '⭐', msg: 'Someone thinks about you every single day and smiles just at the thought of you.', sub: '✦ you are treasured ✦' },
+];
+let scratchFortuneIdx = 0;
+let scratchCompleted = false;
+let scratchCtx, scratchCanvasEl, scratchDrawing = false;
+
+function initScratch() {
+  scratchCompleted = false;
+  scratchCanvasEl = document.getElementById('scratch-canvas');
+  const container = document.getElementById('scratch-container');
+  const reveal = document.getElementById('scratch-reveal');
+  const W = reveal.offsetWidth || 360;
+  const H = reveal.offsetHeight || 220;
+  scratchCanvasEl.width = W; scratchCanvasEl.height = H;
+  scratchCtx = scratchCanvasEl.getContext('2d');
+
+  // Pick fortune
+  const f = scratchFortunes[scratchFortuneIdx % scratchFortunes.length];
+  document.getElementById('scratch-icon').textContent = f.icon;
+  document.getElementById('scratch-msg').textContent = f.msg;
+  document.getElementById('scratch-sub').textContent = f.sub;
+  reveal.classList.remove('revealed');
+
+  // Draw shimmer coating
+  const grad = scratchCtx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, '#4a2870');
+  grad.addColorStop(0.3, '#7c4a9e');
+  grad.addColorStop(0.6, '#5e3585');
+  grad.addColorStop(1, '#3a1f5c');
+  scratchCtx.fillStyle = grad;
+  scratchCtx.roundRect ? scratchCtx.roundRect(0,0,W,H,24) : scratchCtx.fillRect(0,0,W,H);
+  scratchCtx.fill();
+
+  // Shimmer stars overlay
+  scratchCtx.fillStyle = 'rgba(232,201,126,0.3)';
+  scratchCtx.font = '16px serif';
+  for (let i = 0; i < 30; i++) {
+    scratchCtx.fillText(['✦','✧','⋆','❋'][i%4], Math.random()*W, Math.random()*H);
+  }
+
+  // Text instruction
+  scratchCtx.fillStyle = 'rgba(249,240,255,0.9)';
+  scratchCtx.font = "bold 18px 'Playfair Display', serif";
+  scratchCtx.textAlign = 'center';
+  scratchCtx.fillText('✦ Scratch Here ✦', W/2, H/2 - 10);
+  scratchCtx.font = "14px 'Cormorant Garamond', serif";
+  scratchCtx.fillStyle = 'rgba(197,184,240,0.7)';
+  scratchCtx.fillText('Your fortune awaits', W/2, H/2 + 16);
+
+  document.getElementById('scratch-hint').style.opacity = '1';
+  document.getElementById('scratch-done-btn').style.display = 'none';
+
+  scratchCanvasEl.addEventListener('mousedown', startScratch);
+  scratchCanvasEl.addEventListener('mousemove', doScratch);
+  scratchCanvasEl.addEventListener('mouseup', () => { scratchDrawing = false; checkScratch(); });
+  scratchCanvasEl.addEventListener('touchstart', e => { e.preventDefault(); scratchDrawing = true; scratchAt(e.touches[0]); }, {passive:false});
+  scratchCanvasEl.addEventListener('touchmove', e => { e.preventDefault(); if(scratchDrawing) scratchAt(e.touches[0]); checkScratch(); }, {passive:false});
+  scratchCanvasEl.addEventListener('touchend', () => { scratchDrawing = false; checkScratch(); });
+}
+
+function startScratch(e) { scratchDrawing = true; scratchAt(e); }
+function doScratch(e) { if (scratchDrawing) scratchAt(e); }
+function scratchAt(e) {
+  if (scratchCompleted) return;
+  const rect = scratchCanvasEl.getBoundingClientRect();
+  const x = (e.clientX || e.pageX) - rect.left;
+  const y = (e.clientY || e.pageY) - rect.top;
+  scratchCtx.globalCompositeOperation = 'destination-out';
+  scratchCtx.beginPath();
+  scratchCtx.arc(x, y, 28, 0, Math.PI * 2);
+  scratchCtx.fill();
+}
+
+function checkScratch() {
+  if (scratchCompleted) return;
+  const data = scratchCtx.getImageData(0, 0, scratchCanvasEl.width, scratchCanvasEl.height).data;
+  let cleared = 0;
+  for (let i = 3; i < data.length; i += 4) { if (data[i] < 128) cleared++; }
+  const pct = cleared / (scratchCanvasEl.width * scratchCanvasEl.height);
+  if (pct > 0.55) revealScratch();
+}
+
+function revealScratch() {
+  scratchCompleted = true;
+  scratchCtx.clearRect(0, 0, scratchCanvasEl.width, scratchCanvasEl.height);
+  document.getElementById('scratch-reveal').classList.add('revealed');
+  document.getElementById('scratch-hint').style.opacity = '0';
+  document.getElementById('scratch-done-btn').style.display = 'inline-block';
+  scratchFortuneIdx++;
+  showToast('Fortune revealed! ✨');
+}
+
+function resetScratch() {
+  const old = document.getElementById('scratch-canvas');
+  if (old) { old.removeEventListener('mousedown', startScratch); old.removeEventListener('mousemove', doScratch); }
+  setTimeout(initScratch, 100);
+}
+initScratch();
+
+// ══════════════════════════════════════
+// 🧩 PHOTO PUZZLE
+// ══════════════════════════════════════
+let puzzleImg = null, puzzleTiles = [], puzzleSize = 3, puzzleMoves = 0, puzzleSelected = null;
+const PUZZLE_TILE_PX = window.innerWidth < 420 ? 80 : 100;
+
+document.getElementById('puzzle-img-input').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const url = URL.createObjectURL(f);
+  loadPuzzleImage(url);
+  e.target.value = '';
+});
+
+function loadPuzzleImage(url) {
+  const img = new Image();
+  img.onload = () => {
+    puzzleImg = img;
+    document.getElementById('puzzle-preview').src = url;
+    document.getElementById('puzzle-setup').style.display = 'none';
+    document.getElementById('puzzle-active').style.display = 'flex';
+    initPuzzle();
+  };
+  img.src = url;
+}
+
+function initPuzzle() {
+  puzzleMoves = 0;
+  puzzleSelected = null;
+  document.getElementById('puzzle-moves').textContent = 'Moves: 0';
+  const n = puzzleSize;
+  // Create tile indices: 0..n*n-2 are real tiles, n*n-1 is blank
+  puzzleTiles = Array.from({length: n*n}, (_, i) => i);
+  // Set up grid
+  const grid = document.getElementById('puzzle-grid');
+  grid.style.gridTemplateColumns = `repeat(${n}, ${PUZZLE_TILE_PX}px)`;
+  grid.style.gridTemplateRows = `repeat(${n}, ${PUZZLE_TILE_PX}px)`;
+  grid.innerHTML = '';
+  shufflePuzzle();
+}
+
+function shufflePuzzle() {
+  puzzleMoves = 0; puzzleSelected = null;
+  document.getElementById('puzzle-moves').textContent = 'Moves: 0';
+  const n = puzzleSize, total = n*n;
+  // Fisher-Yates shuffle, then ensure solvable
+  do {
+    for (let i = total - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [puzzleTiles[i], puzzleTiles[j]] = [puzzleTiles[j], puzzleTiles[i]];
+    }
+  } while (!isSolvable() || isSolved());
+  renderPuzzle();
+}
+
+function isSolvable() {
+  const n = puzzleSize, tiles = puzzleTiles;
+  let inv = 0;
+  const flat = tiles.filter(t => t !== n*n-1);
+  for (let i = 0; i < flat.length; i++)
+    for (let j = i+1; j < flat.length; j++)
+      if (flat[i] > flat[j]) inv++;
+  const blankRow = Math.floor(tiles.indexOf(n*n-1) / n);
+  if (n % 2 === 1) return inv % 2 === 0;
+  return (inv + (n - blankRow)) % 2 === 1;
+}
+
+function isSolved() {
+  return puzzleTiles.every((t, i) => t === i);
+}
+
+function renderPuzzle() {
+  const grid = document.getElementById('puzzle-grid');
+  grid.innerHTML = '';
+  const n = puzzleSize, total = n*n, blank = total - 1;
+  puzzleTiles.forEach((tile, pos) => {
+    const div = document.createElement('div');
+    div.className = 'puzzle-tile' + (tile === blank ? ' empty' : '');
+    div.dataset.pos = pos;
+    if (tile !== blank) {
+      const c = document.createElement('canvas');
+      c.width = PUZZLE_TILE_PX; c.height = PUZZLE_TILE_PX;
+      const ctx2 = c.getContext('2d');
+      const row = Math.floor(tile / n), col = tile % n;
+      const sw = puzzleImg.naturalWidth / n, sh = puzzleImg.naturalHeight / n;
+      ctx2.drawImage(puzzleImg, col*sw, row*sh, sw, sh, 0, 0, PUZZLE_TILE_PX, PUZZLE_TILE_PX);
+      div.appendChild(c);
+      div.onclick = () => clickTile(pos);
+    }
+    grid.appendChild(div);
+  });
+}
+
+function clickTile(pos) {
+  const n = puzzleSize, blank = n*n-1;
+  const blankPos = puzzleTiles.indexOf(blank);
+  // Check if adjacent to blank
+  const pr = Math.floor(pos/n), pc = pos%n;
+  const br = Math.floor(blankPos/n), bc = blankPos%n;
+  if ((Math.abs(pr-br) === 1 && pc === bc) || (Math.abs(pc-bc) === 1 && pr === br)) {
+    [puzzleTiles[pos], puzzleTiles[blankPos]] = [puzzleTiles[blankPos], puzzleTiles[pos]];
+    puzzleMoves++;
+    document.getElementById('puzzle-moves').textContent = `Moves: ${puzzleMoves}`;
+    renderPuzzle();
+    if (isSolved()) setTimeout(showPuzzleComplete, 300);
+  }
+}
+
+function showPuzzleComplete() {
+  const overlay = document.getElementById('puzzle-complete');
+  document.getElementById('puzzle-complete-msg').textContent = `Solved in ${puzzleMoves} moves — brilliant! 🌟`;
+  overlay.classList.add('active');
+  launchConfetti(); setTimeout(launchConfetti, 400); setTimeout(launchConfetti, 800);
+}
+
+function closePuzzleComplete() {
+  document.getElementById('puzzle-complete').classList.remove('active');
+  shufflePuzzle();
+}
+
+function resetPuzzle() {
+  puzzleImg = null;
+  document.getElementById('puzzle-setup').style.display = 'flex';
+  document.getElementById('puzzle-active').style.display = 'none';
+  document.getElementById('puzzle-grid').innerHTML = '';
+}
+
+// Also allow using gallery photos for puzzle
+document.addEventListener('click', e => {
+  if (e.target.closest('.gallery-item img') && !puzzleImg) {
+    const src = e.target.closest('.gallery-item img').src;
+    // small delay so lightbox doesn't also open
+  }
+});
+
+// ══════════════════════════════════════
+// 🌌 CONSTELLATION NAV
+// ══════════════════════════════════════
+const NAV_SECTIONS = [
+  { id: 'sec-hero',    label: 'Welcome',       icon: '🌙', emoji: '🌙', color: '#e8c97e', size: 64, glow: 'rgba(232,201,126,0.55)' },
+  { id: 'sec-candle',  label: 'Blow the Cake',  icon: '🎂', emoji: '🎂', color: '#f2a7c3', size: 52, glow: 'rgba(242,167,195,0.5)' },
+  { id: 'sec-photos',  label: 'Memories',      icon: '🌸', emoji: '🌸', color: '#c5b8f0', size: 50, glow: 'rgba(197,184,240,0.5)' },
+  { id: 'sec-fortune', label: 'Your Fortune',  icon: '🔮', emoji: '🔮', color: '#a78bfa', size: 54, glow: 'rgba(167,139,250,0.55)' },
+  { id: 'sec-wishes',  label: 'Birthday Wish', icon: '💌', emoji: '💌', color: '#f2a7c3', size: 48, glow: 'rgba(242,167,195,0.45)' },
+  { id: 'sec-gift',    label: 'Gift',          icon: '🎁', emoji: '🎁', color: '#e8c97e', size: 56, glow: 'rgba(232,201,126,0.5)' },
+  { id: 'sec-scratch', label: 'Secret Fortune',icon: '💎', emoji: '💎', color: '#93c5fd', size: 50, glow: 'rgba(147,197,253,0.5)' },
+  { id: 'sec-puzzle',  label: 'Memory Puzzle', icon: '🧩', emoji: '🧩', color: '#6ee7b7', size: 50, glow: 'rgba(110,231,183,0.45)' },
+  { id: 'sec-letter',  label: 'From a Friend',  icon: '✉️', emoji: '✉️', color: '#f9a8d4', size: 52, glow: 'rgba(249,168,212,0.5)'  },
+  { id: 'sec-may13',   label: 'May 13 Magic',  icon: '🌟', emoji: '🌟', color: '#fde68a', size: 54, glow: 'rgba(253,230,138,0.55)' },
+];
+
+// Layout positions — expanded constellation for 10 nodes
+const NAV_POSITIONS = [
+  [50,  14],  // hero — top center
+  [22,  30],  // candle
+  [78,  30],  // photos
+  [10,  52],  // fortune
+  [90,  52],  // wishes
+  [22,  72],  // gift
+  [50,  82],  // scratch — bottom center
+  [78,  72],  // puzzle
+  [38,  48],  // letter — inner left
+  [62,  48],  // may13  — inner right
+];
+
+// Constellation lines
+const NAV_LINES = [
+  [0,1],[0,2],[1,3],[2,4],[3,5],[4,7],[5,6],[6,7],[1,2],[3,4],
+  [0,8],[0,9],[8,9],[1,8],[2,9],[8,5],[9,7]
+];
+
+let navOpen = false;
+let navNodes = [];
+let activeNavId = 'sec-hero';
+
+function buildNav() {
+  const nav = document.getElementById('constellation-nav');
+  // Remove old nodes
+  nav.querySelectorAll('.nav-node').forEach(n => n.remove());
+  navNodes = [];
+
+  NAV_SECTIONS.forEach((sec, i) => {
+    const [cx, cy] = NAV_POSITIONS[i];
+    const node = document.createElement('div');
+    node.className = 'nav-node' + (sec.id === activeNavId ? ' active-node' : '');
+    node.dataset.target = sec.id;
+    node.dataset.idx = i;
+    node.style.left = cx + '%';
+    node.style.top = cy + '%';
+    node.style.transitionDelay = (i * 0.055) + 's';
+
+    const s = sec.size;
+    const ringSize = s + 22;
+    node.innerHTML = `
+      <div class="nav-orb" style="
+        width:${s}px;height:${s}px;
+        background:radial-gradient(circle at 35% 30%, ${sec.color}33, ${sec.color}11 60%, transparent);
+        border:1.5px solid ${sec.color}66;
+        box-shadow:0 0 ${s*0.5}px ${sec.glow}, 0 0 ${s*0.9}px ${sec.glow.replace('0.5','0.15')};
+      " style="">
+        <div class="nav-orb-pulse" style="background:radial-gradient(circle, ${sec.color}22, transparent 70%);"></div>
+        <span style="position:relative;z-index:2;font-size:${s*0.38}px;filter:drop-shadow(0 0 8px ${sec.color});">${sec.emoji}</span>
+        <span style="
+          position:absolute;width:${ringSize}px;height:${ringSize}px;
+          border-radius:50%;border:1px dashed ${sec.color}33;
+          top:50%;left:50%;transform:translate(-50%,-50%) rotate(0deg);
+          animation:orb-spin ${6+i*0.7}s linear infinite;
+        "></span>
+      </div>
+      <span class="nav-label">${sec.label}</span>`;
+
+    node.addEventListener('click', (e) => {
+      e.stopPropagation();
+      navigateTo(sec.id, i);
+    });
+
+    nav.appendChild(node);
+    navNodes.push(node);
+  });
+
+  drawNavLines();
+}
+
+function drawNavLines() {
+  const canvas = document.getElementById('nav-canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  NAV_LINES.forEach(([a, b], li) => {
+    const [ax, ay] = NAV_POSITIONS[a];
+    const [bx, by] = NAV_POSITIONS[b];
+    const x1 = ax / 100 * canvas.width, y1 = ay / 100 * canvas.height;
+    const x2 = bx / 100 * canvas.width, y2 = by / 100 * canvas.height;
+
+    // Gradient line
+    const grad = ctx.createLinearGradient(x1,y1,x2,y2);
+    grad.addColorStop(0, NAV_SECTIONS[a].color + '55');
+    grad.addColorStop(0.5, 'rgba(197,184,240,0.35)');
+    grad.addColorStop(1, NAV_SECTIONS[b].color + '55');
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 8]);
+    ctx.lineDashOffset = (Date.now() / 30 + li * 20) % 48;
+    ctx.stroke();
+
+    // Tiny star dots along the line
+    for (let t = 0.25; t <= 0.75; t += 0.25) {
+      const mx = x1 + (x2-x1)*t, my = y1 + (y2-y1)*t;
+      ctx.beginPath();
+      ctx.arc(mx, my, 1.5, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(197,184,240,0.4)';
+      ctx.setLineDash([]);
+      ctx.fill();
+    }
+  });
+}
+
+let navLineAnim = null;
+function animateNavLines() {
+  if (!navOpen) return;
+  drawNavLines();
+  navLineAnim = requestAnimationFrame(animateNavLines);
+}
+
+function toggleNav() {
+  navOpen = !navOpen;
+  const nav = document.getElementById('constellation-nav');
+  const btn = document.getElementById('nav-toggle');
+  if (navOpen) {
+    buildNav();
+    nav.classList.add('open');
+    btn.classList.add('open');
+    btn.textContent = '✕';
+    animateNavLines();
+  } else {
+    closeNav();
+  }
+}
+
+function closeNav() {
+  navOpen = false;
+  const nav = document.getElementById('constellation-nav');
+  const btn = document.getElementById('nav-toggle');
+  nav.classList.remove('open');
+  btn.classList.remove('open');
+  btn.textContent = '✦';
+  cancelAnimationFrame(navLineAnim);
+}
+
+function handleNavBackdrop(e) {
+  if (e.target === document.getElementById('constellation-nav') ||
+      e.target === document.getElementById('nav-canvas')) {
+    closeNav();
+  }
+}
+
+function navigateTo(sectionId, idx) {
+  activeNavId = sectionId;
+  navNodes.forEach((n, i) => n.classList.toggle('active-node', i === idx));
+  const node = navNodes[idx];
+  node.style.transform = 'translate(-50%, -50%) scale(1.3)';
+  setTimeout(() => { node.style.transform = 'translate(-50%, -50%) scale(1)'; }, 300);
+
+  // Burst sparkles from node position
+  const [cx, cy] = NAV_POSITIONS[idx];
+  const x = cx / 100 * window.innerWidth;
+  const y = cy / 100 * window.innerHeight;
+  for (let i = 0; i < 10; i++) {
+    const s = document.createElement('div');
+    s.className = 'sparkle';
+    const angle = (i / 10) * Math.PI * 2;
+    s.textContent = ['✦','✧','⋆','❋'][i%4];
+    s.style.cssText = `position:fixed;left:${x}px;top:${y}px;font-size:${0.8+Math.random()*0.6}rem;color:${NAV_SECTIONS[idx].color};--tx:${Math.cos(angle)*50}px;--ty:${Math.sin(angle)*50}px;z-index:9200;`;
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 900);
+  }
+
+  setTimeout(() => {
+    closeNav();
+    // Hero is shown as-is; all others are panels
+    if (sectionId === 'sec-hero') {
+      closePanel();
+    } else {
+      openPanel(sectionId);
+    }
+  }, 320);
+}
+
+let activePanelId = null;
+function openPanel(id) {
+  // Close any open panel first
+  if (activePanelId && activePanelId !== id) {
+    const prev = document.getElementById(activePanelId);
+    if (prev) { prev.classList.remove('panel-active'); }
+  }
+  activePanelId = id;
+  const panel = document.getElementById(id);
+  if (panel) {
+    panel.classList.add('panel-active');
+    panel.scrollTop = 0;
+    // Re-init scratch canvas when opening that panel (size may need refresh)
+    if (id === 'sec-scratch') setTimeout(initScratch, 100);
+  }
+  // Update toggle button color
+  const navIdx = NAV_SECTIONS.findIndex(s => s.id === id);
+  if (navIdx >= 0) {
+    const btn = document.getElementById('nav-toggle');
+    btn.style.borderColor = NAV_SECTIONS[navIdx].color + '99';
+    btn.style.color = NAV_SECTIONS[navIdx].color;
+    activeNavId = id;
+  }
+}
+
+function closePanel() {
+  if (activePanelId) {
+    const panel = document.getElementById(activePanelId);
+    if (panel) panel.classList.remove('panel-active');
+    activePanelId = null;
+  }
+  // Reset nav toggle to hero color
+  const btn = document.getElementById('nav-toggle');
+  btn.style.borderColor = '';
+  btn.style.color = '';
+  activeNavId = 'sec-hero';
+}
+
+// ── SCROLL REVEAL ──
+
+// ── SCROLL REVEAL (hero only now) ──
+// panels reveal via the nav system; hero elements animate on load via CSS
+
+window.addEventListener('resize', () => { if (navOpen) buildNav(); });
+
+// ── INIT ──
+// ══════════════════════════════════════
+// 🔒 ENVELOPE COUNTDOWN GATE
+// ══════════════════════════════════════
+function isMay13OrLater() {
+  const now = new Date();
+  return now.getMonth() === 4 && now.getDate() >= 13;
+}
+
+function updateEnvelopeGate() {
+  const gate = document.getElementById('envelope-gate');
+  const hint = document.getElementById('envelope-hint');
+  const wrap = document.getElementById('envelope-wrap');
+
+  if (isMay13OrLater()) {
+    // Hide the gate, allow opening
+    gate.style.display = 'none';
+    wrap.style.pointerEvents = '';
+    wrap.style.opacity = '';
+    if (hint) hint.style.display = '';
+    return;
+  }
+
+  // Show gate, block envelope interaction
+  gate.style.display = 'flex';
+  wrap.style.pointerEvents = 'none';
+  wrap.style.opacity = '0.18';
+  if (hint) hint.style.display = 'none';
+
+  // Countdown to May 13 midnight
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const may13 = new Date(thisYear, 4, 13, 0, 0, 0);
+  const diff = may13 - now;
+
+  const days  = Math.max(0, Math.floor(diff / (1000*60*60*24)));
+  const hours = Math.max(0, Math.floor((diff % (1000*60*60*24)) / (1000*60*60)));
+  const mins  = Math.max(0, Math.floor((diff % (1000*60*60)) / (1000*60)));
+  const secs  = Math.max(0, Math.floor((diff % (1000*60)) / 1000));
+
+  document.getElementById('eg-days').textContent  = String(days).padStart(2,'0');
+  document.getElementById('eg-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('eg-mins').textContent  = String(mins).padStart(2,'0');
+  document.getElementById('eg-secs').textContent  = String(secs).padStart(2,'0');
+}
+
+// Run immediately and every second
+updateEnvelopeGate();
+setInterval(updateEnvelopeGate, 1000);
+
+// ══════════════════════════════════════
+// ✉️ BIRTHDAY LETTER
+// ══════════════════════════════════════
+let letterOpened = false;
+
+function openEnvelope() {
+  if (!isMay13OrLater()) return; // blocked until May 13
+  if (letterOpened) return;
+  letterOpened = true;
+
+  const flap    = document.getElementById('envelope-flap');
+  const seal    = document.getElementById('wax-seal');
+  const paper   = document.getElementById('letter-paper-peek');
+  const hint    = document.getElementById('envelope-hint');
+  const stage   = document.getElementById('letter-envelope-stage');
+  const cardWrap= document.getElementById('letter-card-wrap');
+
+  // Set today's date on the letter
+  const now = new Date();
+  const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+  document.getElementById('letter-date').textContent =
+    now.toLocaleDateString('en-GB', opts);
+
+  // Break seal
+  seal.classList.add('broken');
+  hint.style.opacity = '0';
+
+  // Open flap
+  setTimeout(() => { flap.classList.add('open'); }, 200);
+
+  // Rise paper
+  setTimeout(() => { paper.classList.add('rising'); }, 400);
+
+  // Spawn sparkles from envelope centre
+  const wrap = document.getElementById('envelope-wrap');
+  if (wrap) {
+    const r = wrap.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (let i = 0; i < 16; i++) {
+      const s = document.createElement('div');
+      s.className = 'sparkle';
+      const angle = (i / 16) * Math.PI * 2;
+      s.textContent = ['✦','✧','❋','💜','🌸'][i % 5];
+      s.style.cssText = `position:fixed;left:${cx}px;top:${cy}px;font-size:${0.9+Math.random()*0.7}rem;
+        color:${['#f2a7c3','#c5b8f0','#e8c97e','#a78bfa'][i%4]};
+        --tx:${Math.cos(angle)*70}px;--ty:${Math.sin(angle)*70}px;z-index:9200;`;
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 1000);
+    }
+  }
+
+  // Fade out envelope, show letter
+  setTimeout(() => {
+    stage.style.transition = 'opacity 0.6s ease';
+    stage.style.opacity = '0';
+    stage.style.pointerEvents = 'none';
+  }, 1500);
+
+  setTimeout(() => {
+    stage.style.display = 'none';
+    cardWrap.style.display = 'block';
+    // Re-trigger the unfurl animation
+    const card = document.getElementById('letter-card');
+    card.style.animation = 'none';
+    void card.offsetWidth; // force reflow
+    card.style.animation = '';
+    launchConfetti();
+  }, 2100);
+}
+
+function resetLetter() {
+  letterOpened = false;
+  const stage   = document.getElementById('letter-envelope-stage');
+  const cardWrap= document.getElementById('letter-card-wrap');
+  const flap    = document.getElementById('envelope-flap');
+  const seal    = document.getElementById('wax-seal');
+  const paper   = document.getElementById('letter-paper-peek');
+  const hint    = document.getElementById('envelope-hint');
+
+  cardWrap.style.display = 'none';
+  stage.style.display = 'block';
+  stage.style.opacity = '1';
+  stage.style.pointerEvents = '';
+  stage.style.transition = '';
+
+  flap.classList.remove('open');
+  seal.classList.remove('broken');
+  paper.classList.remove('rising');
+  hint.style.opacity = '1';
+
+  // Scroll panel back to top
+  const panel = document.getElementById('sec-letter');
+  if (panel) panel.scrollTop = 0;
+}
+
+function editLetter() {
+  const sal = document.getElementById('letter-salutation');
+  const body = document.getElementById('letter-body');
+  const sign = document.getElementById('letter-sign');
+
+  const newSal = prompt('Edit the salutation:', sal.textContent);
+  if (newSal && newSal.trim()) sal.textContent = newSal.trim();
+
+  const newBody = prompt('Edit the main message (keep it heartfelt ✨):', body.innerText);
+  if (newBody && newBody.trim()) {
+    body.innerHTML = newBody.trim().split('\n').filter(Boolean).map(p => `<p>${p}</p>`).join('');
+  }
+
+  const newSign = prompt('Edit the sign-off:', sign.innerText);
+  if (newSign && newSign.trim()) sign.innerHTML = newSign.trim().replace('\n','<br>');
+
+  showToast('Letter personalised ✦');
+}
+
+// ══════════════════════════════════════
+// 🌟 MAY 13 COUNTDOWN & SPECIAL
+// ══════════════════════════════════════
+function updateCountdown() {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  let bday = new Date(thisYear, 4, 13, 0, 0, 0); // May = month 4
+  if (now >= bday) {
+    // Check if it's literally today
+    const isToday = now.getDate() === 13 && now.getMonth() === 4;
+    if (isToday) {
+      document.getElementById('countdown-digits').style.display = 'none';
+      document.getElementById('birthday-arrived').style.display = 'block';
+      document.getElementById('countdown-title').textContent = '🎂 The stars aligned for you today ✦';
+      return;
+    }
+    // Birthday passed this year — count to next year
+    bday = new Date(thisYear + 1, 4, 13, 0, 0, 0);
+  }
+
+  const diff = bday - now;
+  const days  = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins  = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs  = Math.floor((diff % (1000 * 60)) / 1000);
+
+  document.getElementById('cd-days').textContent  = String(days).padStart(2,'0');
+  document.getElementById('cd-hours').textContent = String(hours).padStart(2,'0');
+  document.getElementById('cd-mins').textContent  = String(mins).padStart(2,'0');
+  document.getElementById('cd-secs').textContent  = String(secs).padStart(2,'0');
+
+  if (days === 0 && hours === 0) {
+    document.getElementById('countdown-title').textContent = '⏳ Almost time… the stars are gathering!';
+  } else if (days <= 1) {
+    document.getElementById('countdown-title').textContent = '🌟 Tomorrow is the day — Kanisha\'s birthday!';
+  } else {
+    document.getElementById('countdown-title').textContent = `⏳ Counting down to May 13…`;
+  }
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+function ageBurst() {
+  launchConfetti();
+  setTimeout(launchConfetti, 300);
+  setTimeout(launchConfetti, 600);
+  showToast('Happy Birthday Kanisha! 🎂✨');
+  // Spawn extra gold sparkles
+  for (let i = 0; i < 20; i++) {
+    setTimeout(() => {
+      const s = document.createElement('div');
+      s.className = 'confetti-piece';
+      s.style.cssText = `left:${Math.random()*100}vw;top:${Math.random()*40}vh;
+        background:${['#e8c97e','#f2a7c3','#c5b8f0','#fff'][Math.floor(Math.random()*4)]};
+        border-radius:50%;width:${Math.random()*10+5}px;height:${Math.random()*10+5}px;
+        animation-duration:${Math.random()*2+1}s;`;
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 3000);
+    }, i * 60);
+  }
+}
+
+buildCandles();
+// Confetti is triggered by the cover opening instead of on page load
+// setTimeout(launchConfetti, 2200);
+</script>
+<!-- 🎂 WISH CELEBRATION OVERLAY -->
+<div class="wish-overlay" id="wish-overlay">
+  <div class="wish-overlay-ring"></div>
+  <div class="wish-overlay-ring"></div>
+  <div class="wish-overlay-ring"></div>
+  <div class="wish-cake-icon">🎂</div>
+  <h2 class="wish-headline">Your wish is on its way ✦</h2>
+  <p class="wish-sub">The stars heard every single word</p>
+  <div class="wish-stars-row">
+    <span>✦</span><span>❋</span><span>✦</span><span>❋</span><span>✦</span>
+  </div>
+  <div class="wish-message-card">
+    <p class="wish-message-text">
+      Right now, somewhere in the universe, something beautiful is being arranged just for you. Every candle you blew out carried a little piece of your heart skyward — and the stars are listening, Kanisha. They always do, for someone like you.
+    </p>
+    <span class="wish-message-from">— the universe 🌙</span>
+  </div>
+  <button class="wish-close-btn" onclick="closeWishOverlay()">✦ Back to celebrating ✦</button>
+</div>
+
+</body>
+</html>
